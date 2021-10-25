@@ -88,7 +88,7 @@ namespace HelloWorld
             List<Int64> factorList = new List<Int64>();
 
             //Loop through every number between 1 and our input number
-            for(Int64 y=1; y<=x; y++)
+            for(Int64 y=1; y<=(x/2); y++)
             {
                 /*
                  * Just like "+" is an addition operation and "/" represents division,  "%" is an operation called modulo.
@@ -100,8 +100,13 @@ namespace HelloWorld
                 {
                     //y is a factor of x because there is no remainder after x/y
                     factorList.Add(y);
+
+                    Console.Write("found factor {0}\r", y);
                 }
             }
+
+            //We did not count all the way up the number but we know it is a factor of itself
+            factorList.Add(x);
 
             //Convert the List to an Array and return it.
             return factorList.ToArray();
@@ -117,7 +122,7 @@ namespace HelloWorld
             List<Int64> factorList = new List<Int64>();
 
             //Loop through every number between 2 and our input number-1
-            for (int y = 2; y <= x; y++)
+            for (int y = 2; y <= (x/2); y++)
             {
                 if (x % y == 0)
                 {
@@ -127,10 +132,11 @@ namespace HelloWorld
                     {
                         //It is prime.  Add it to the list.
                         factorList.Add(y);
+                        Console.Write("found prime {0}\r", y);
 
                         //divide x by the prime value y then set y back to 2 and see if there are any more primes in x/y
                         x = x / y;
-                        y = 1; //It will be 2 in the next step
+                        y = y-1; //It will be y again in the next step
                     }
 
                 }
@@ -138,6 +144,10 @@ namespace HelloWorld
 
             //We skipped 1 in the loop above.  Add it to the beginning of the list now.
             factorList.Insert(0, 1);
+
+            //We did not count all the way up the number but we know it is a factor of itself
+            factorList.Add(x);
+
             //Convert the List to an Array and return it.
             return factorList.ToArray();
         }
@@ -147,7 +157,7 @@ namespace HelloWorld
         /// </summary>
         /// <param name="num"></param>
         /// <returns>true/false</returns>
-        static bool isPrime2(Int64 num)
+        static bool isPrime(Int64 num)
         {
             /**
              * Prime numbers are number that are only divisible by
@@ -197,26 +207,6 @@ namespace HelloWorld
 
 
             return list;
-        }
-
-        static bool isPrime(Int64 num)
-        {
-            Int64[] factors = factor(num);
-
-            if (num == 1)
-            {
-                return true;
-            }
-
-            if(factors.Length == 2)
-            {
-                if(factors[0] == 1 && factors[1] == num)
-                {
-                    return true;
-                }
-            }
-
-            return false;
         }
     }
 }
