@@ -205,7 +205,6 @@ namespace HelloWorld
                 list = list.Substring(0, list.Length - 1);
             }
 
-
             return list;
         }
     }
