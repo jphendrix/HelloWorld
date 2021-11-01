@@ -5,6 +5,7 @@ namespace HelloWorld
 {
     class Program
     {
+        static List<UInt64> _primes = new List<UInt64>();
         static void Main(string[] args)
         {
             /*
@@ -16,22 +17,29 @@ namespace HelloWorld
 
             Console.WriteLine("Welcome to the Prime Factorization demo!");
 
+            init();
+
             //Keep running until we are told to quit.
             while (!quit)
             {
-                Console.WriteLine("Give me an integer.  Or just press ENTER to quit");
+                Console.WriteLine("Give me an integer.  Or typle \"prime\" to find them all");
+                Console.WriteLine("Or just press ENTER to quit");
 
                 /*
                  * ReadLine() tells the application to wait for user input.  The program will
                  * pause until the user hits the ENTER key.  Any text typed in will be stored
                  * in the response variable as a string.
-                 */ 
+                 */
                 string response = Console.ReadLine();
 
                 if(response == "")
                 {
                     //If the reponse was empty then the user pressed ENTER without typeing anything else in.
                     quit = true;
+                }
+                else if(response.Trim().ToLower() == "prime")
+                {
+                    findThemAll();
                 }
                 else
                 {
@@ -43,25 +51,23 @@ namespace HelloWorld
                     try
                     {
                         //response is a string datatype.  But to do any math on it, we need to convert it to a number.  In this case as 64 bit integer
-                        Int64 num = Int64.Parse(response);
+                        UInt64 num = UInt64.Parse(response);
 
                         //Find all of the factors and the prime factors of the number.
-                        Int64[] factors = factor(num);
-                        Int64[] primeFactors = primeFactor(num);
+                        UInt64[] primeFactors = primeFactor(num);
 
                         //Show the user what we found
-                        Console.WriteLine("The factors of {0} are [{1}]", num, intArrayToCSV(factors));
-                        Console.Write("The ");
-                        Console.ForegroundColor = ConsoleColor.Green;
-                        Console.Write("Prime ");
-                        Console.ForegroundColor = ConsoleColor.White;
-                        Console.WriteLine("factors of {0} are [{1}]\n\n", num, intArrayToCSV(primeFactors));
+                        Console.WriteLine("The prime factors of {0} are [{1}]", num, intArrayToCSV(primeFactors));
+                    }
+                    catch(OverflowException ex)
+                    {
+                        //Too big
+                        Console.WriteLine("dang.  That number is too big (or too small?) for me. I can only do numbers between 0 and {0:n0}",UInt64.MaxValue);
                     }
                     catch (Exception ex)
                     {
                         //Something bad happend.  Tell the user about it then quit.
                         Console.WriteLine("I asked for an interger but you gave me {0} which caused error '{1}'.", response, ex.Message);
-                        quit = true;
                     }
                 }
             }
@@ -73,56 +79,19 @@ namespace HelloWorld
             System.Threading.Thread.Sleep(5000);
         }
 
-        /// <summary>
-        /// Find all of the factors of a number.
-        /// </summary>
-        /// <param name="x"></param>
-        /// <returns>Array of numbers between 1 and the input number that divide evenly into the number</returns>
-        static Int64[] factor(Int64 x)
-        {
-            /*
-             * A List is very similar to an Array but a List
-             * allows us to add values to it.  An Array is fixed
-             * size and can not be altered.
-             */ 
-            List<Int64> factorList = new List<Int64>();
-
-            //Loop through every number between 1 and our input number
-            for(Int64 y=1; y<=(x/2); y++)
-            {
-                /*
-                 * Just like "+" is an addition operation and "/" represents division,  "%" is an operation called modulo.
-                 * It tells you the remainder of a division operation. 5%2=1, 3%3=0, 10%8=2.  If x%2=0 then x is an even number.  
-                 * Modulo is handy for a lot of things but here we are using it to see if the divion has a remainder or not.  If
-                 * the remainder is zero, then x is divisible by y.
-                 */ 
-                if(x % y == 0)
-                {
-                    //y is a factor of x because there is no remainder after x/y
-                    factorList.Add(y);
-
-                    Console.Write("found factor {0}\r", y);
-                }
-            }
-
-            //We did not count all the way up the number but we know it is a factor of itself
-            factorList.Add(x);
-
-            //Convert the List to an Array and return it.
-            return factorList.ToArray();
-        }
 
         /// <summary>
         /// Find all the prime factors of a number
         /// </summary>
         /// <param name="x"></param>
         /// <returns>Array of prime numbers.  When multiplied together, they will equal the input number.</returns>
-        static Int64[] primeFactor(Int64 x)
+        static UInt64[] primeFactor(UInt64 x)
         {
-            List<Int64> factorList = new List<Int64>();
+            List<UInt64> factorList = new List<UInt64>();
 
-            //Loop through every number between 2 and our input number-1
-            for (int y = 2; y <= (x/2); y++)
+
+            //Loop through every odd number between 3 and our input sqrt(number)
+            for (UInt64 y = 2; y <= Math.Sqrt(x); y++)
             {
                 if (x % y == 0)
                 {
@@ -132,21 +101,21 @@ namespace HelloWorld
                     {
                         //It is prime.  Add it to the list.
                         factorList.Add(y);
-                        Console.Write("found prime {0}\r", y);
 
                         //divide x by the prime value y then set y back to 2 and see if there are any more primes in x/y
                         x = x / y;
                         y = y-1; //It will be y again in the next step
                     }
-
                 }
             }
 
-            //We skipped 1 in the loop above.  Add it to the beginning of the list now.
+            //x is always divisible by 1
             factorList.Insert(0, 1);
 
-            //We did not count all the way up the number but we know it is a factor of itself
-            factorList.Add(x);
+            if (isPrime(x))
+            {
+                factorList.Add(x);
+            }
 
             //Convert the List to an Array and return it.
             return factorList.ToArray();
@@ -157,32 +126,40 @@ namespace HelloWorld
         /// </summary>
         /// <param name="num"></param>
         /// <returns>true/false</returns>
-        static bool isPrime(Int64 num)
+        static bool isPrime(UInt64 num)
         {
             /**
              * Prime numbers are number that are only divisible by
              * themselves and 1.
              * 
-             * TODO: This function is broken.  Until it knows how to check if a number is
-             * prime or not, it will just guess.
              */
-            bool isPrime = false;
-            Random random = new Random();
 
-            //Returns a random number that is equal or greater than 1  less than 3.
-            //Expect either 1 or 2
-            int r = random.Next(1, 3);
-
-            //r should be 1 roughly 50% of the time
-            if(r == 1)
+            //2 is the only even prime
+            if(num>2 && num %2 == 0)
             {
-                isPrime = true;
+                return false;
             }
 
-            //If you are having trouble with this funtion, uncomment this line to help with trouble shooting.
-            //Console.WriteLine("\t{0} {1} prime", num,isPrime?"is":"is not");
+            //Check to see if it is known.
+            for(int i =0; i<_primes.Count; i++)
+            {
+                if (_primes[i] == num)
+                {
+                    return true;
+                }
+            }
 
-            return isPrime;
+            for (UInt64 i = 3; i< Math.Sqrt(num); i += 2)
+            {
+                //If it divides by any other number than its self, then it is not prime.
+                if(num%i==0 && i != num)
+                {
+                    return false;
+                }
+            }
+
+            _primes.Add(num);
+            return true;
         }
 
         /// <summary>
@@ -190,10 +167,10 @@ namespace HelloWorld
         /// </summary>
         /// <param name="a"></param>
         /// <returns>string list of integers in the format of "x,y,z"</returns>
-        static string intArrayToCSV(Int64[] a)
+        static string intArrayToCSV(UInt64[] a)
         {
             string list = "";
-            for (Int64 i = 0; i < a.Length; i++)
+            for (int i = 0; i < a.Length; i++)
             {
                 //concatenate the string value of the integer followed by a comma.
                 list += a[i].ToString() + ",";
@@ -207,5 +184,28 @@ namespace HelloWorld
 
             return list;
         }
+
+        /// <summary>
+        /// We already know some primes.
+        /// </summary>
+        static void init()
+        {
+            _primes.Add(1);
+            _primes.Add(2);
+            _primes.Add(3);
+        }
+
+        static void findThemAll()
+        {
+            for(UInt64 i=1; i<Math.Sqrt(UInt64.MaxValue); i+=2)
+            {
+                if (isPrime(i))
+                {
+                    Console.Write(" {0:n0} is prime\r", i);
+                }
+            }
+        }
     }
+
+ 
 }
